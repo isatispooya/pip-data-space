@@ -4,7 +4,7 @@ from django.utils import timezone
 import datetime
 import requests
 import json
-
+import random
 
 def login () :
 
@@ -453,10 +453,72 @@ def groups () :
             print(f"Payload: {payload}")
 
 
-''' 
--Run functions respectively Up to Down 
--Always check id maybe changed 
-'''
+def customer_remain():
+    
+    '''
+    -Create  customer remain's field 
+    -Get customer  acording to id  (id)
+    -Customer is uniqe
+    -Other feilds set random 
+    -Maybe need  check  (customer , user , company)'s id 
+    '''
+    token = login()
+    if not token:
+        print("خطا در دریافت توکن.")
+        return
+    
+    url_customer_remain = "http://127.0.0.1:8000/api/customerremain/"
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    }
+
+    response = requests.get(url="http://127.0.0.1:8000/api/customer/", headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        
+        if isinstance(data, list):
+            customer_ids = [item.get("id") for item in data if "id" in item]
+            
+            if not customer_ids:
+                print("هیچ شناسه مشتری در پاسخ یافت نشد.")
+                return
+        else:
+            print("پاسخ API انتظار می‌رفت یک لیست باشد.")
+            return
+    else:
+        print(f"Request failed with status code {response.status_code}")
+        return
+
+    customer_remain_data = [
+        {"id": customer_id, "other_key": "value1"} for customer_id in customer_ids
+    ]
+    customer_remain_data = [
+            {
+                "customer": customer_id,
+                "adjusted_remain": int(random.uniform(10, 50000)  ),
+                "blocked_remain": int(random.uniform(10, 10000)  ),
+                "credit": int(random.uniform(10, 100000000)  ),       
+                "current_remain": int(random.uniform(10, 6000)  ),
+            } for customer_id in customer_ids
+        ]
+
+    for i in customer_remain_data:
+        payload = json.dumps(i)
+        try:
+            result = requests.post(url=url_customer_remain, headers=headers, data=payload)
+            print('-' * 25)
+            print(result.content)
+        except requests.exceptions.RequestException as e:
+            print(f"Payload: {payload}")
+            print(f"Error: {e}")
+
+
+    ''' 
+    -Run functions respectively Up to Down 
+    -Always check id maybe changed 
+    '''
 # read()
 # folan()
 # create_company()
@@ -464,3 +526,4 @@ def groups () :
 # create_customer ()
 # userpermissions ()
 # groups ()
+# customer_remain()
